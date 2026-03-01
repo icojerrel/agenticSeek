@@ -1,0 +1,14 @@
+{
+  "_description": "Dramatic lighting, deep blacks, high-fashion editorial style",
+  "shot": {
+    "angle": "dramatic low angle, slightly tilted composition",
+    "background": "deep black velvet or dark charcoal gradient",
+    "lighting": "single hard key light from upper right, strong specular highlights, deep shadows, chiaroscuro",
+    "props": ["dark rose petals", "gold geometric object", "crystal fragment"],
+    "mood": "luxury, dramatic, editorial, mysterious, high-fashion, bold"
+  },
+  "technical": {
+    "aspect_ratio": "9:16",
+    "quality": "hd"
+  }
+}

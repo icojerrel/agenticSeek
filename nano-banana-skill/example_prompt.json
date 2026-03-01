@@ -1,0 +1,32 @@
+{
+  "meta": {
+    "campaign": "vitamine-c-serum-launch",
+    "style_preset": "dtc-product"
+  },
+  "product": {
+    "name": "Lumière Vitamine C Serum",
+    "category": "skincare serum",
+    "color": "amber glass bottle with gold dropper cap",
+    "material": "30ml glass dropper bottle",
+    "key_features": [
+      "20% Vitamin C",
+      "hyaluronic acid",
+      "minimalist label with embossed logo"
+    ]
+  },
+  "shot": {
+    "angle": "45-degree front-facing",
+    "background": "pure white seamless",
+    "lighting": "soft box from upper left, subtle shadow on right",
+    "props": [
+      "fresh orange slice",
+      "small white ceramic dish with serum droplet"
+    ],
+    "mood": "clean, clinical yet luxurious"
+  },
+  "technical": {
+    "aspect_ratio": "1:1",
+    "num_images": 4,
+    "quality": "hd"
+  }
+}

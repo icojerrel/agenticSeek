@@ -1,0 +1,14 @@
+{
+  "_description": "Overhead minimal flat lay, pastel or marble surface",
+  "shot": {
+    "angle": "directly overhead, 90-degree bird's eye view, perfectly flat",
+    "background": "white marble surface with soft grey veining",
+    "lighting": "diffused overhead natural light, no harsh shadows, even exposure",
+    "props": ["small pastel flower petals", "minimalist geometric shapes", "clean white cards"],
+    "mood": "minimal, airy, Pinterest-ready, fresh, organised, Scandinavian"
+  },
+  "technical": {
+    "aspect_ratio": "1:1",
+    "quality": "hd"
+  }
+}

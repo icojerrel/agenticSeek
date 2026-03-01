@@ -1,0 +1,14 @@
+{
+  "_description": "Golden hour, natural textures, aspirational lifestyle feel",
+  "shot": {
+    "angle": "slight 30-degree angle, eye level",
+    "background": "warm wooden surface, linen cloth, soft window light",
+    "lighting": "golden hour window light from the right, soft bokeh background, warm temperature 4200K",
+    "props": ["dried botanicals", "neutral linen napkin", "small ceramic object"],
+    "mood": "warm, aspirational, artisan, cozy, Instagram-ready"
+  },
+  "technical": {
+    "aspect_ratio": "4:3",
+    "quality": "hd"
+  }
+}
