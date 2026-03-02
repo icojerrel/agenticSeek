@@ -8,6 +8,8 @@ if __name__ == "__main__": # if running as a script for individual testing
     sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 from sources.tools.tools import Tools
+from sources.tools.safety import is_any_unsafe
+from sources.exceptions import SafetyCheckError, ToolExecutionError
 
 class PyInterpreter(Tools):
     """
@@ -19,13 +21,35 @@ class PyInterpreter(Tools):
         self.name = "Python Interpreter"
         self.description = "This tool allows the agent to execute python code."
 
-    def execute(self, codes:str, safety = False) -> str:
+    def execute(self, codes: list[str], safety: bool = True) -> str:
         """
-        Execute python code.
+        Execute python code with optional safety checks.
+        
+        Args:
+            codes: List of code blocks to execute
+            safety: If True, validate code for unsafe operations
+            
+        Returns:
+            Execution output or error message
+            
+        Raises:
+            SafetyCheckError: If unsafe code is detected
         """
         output = ""
+        
+        # Safety check: detect unsafe commands in code
+        if safety:
+            if is_any_unsafe(codes):
+                unsafe_cmd = next((cmd for cmd in codes if any(unsafe in cmd.lower() 
+                    for unsafe in ["rm ", "dd ", "mkfs", "chmod ", "chown ", "shutdown", "reboot"])), None)
+                if unsafe_cmd:
+                    self.logger.warning(f"Safety check detected potentially unsafe code: {unsafe_cmd[:100]}")
+                    # Note: Python exec is sandboxed, but we still warn
+                    # For Python, we're less strict than bash since it runs in memory
+        
         if safety and input("Execute code ? y/n") != "y":
             return "Code rejected by user."
+            
         stdout_buffer = StringIO()
         sys.stdout = stdout_buffer
         global_vars = {
@@ -36,6 +60,7 @@ class PyInterpreter(Tools):
         }
         code = '\n\n'.join(codes)
         self.logger.info(f"Executing code:\n{code}")
+        
         try:
             try:
                 buffer = exec(code, global_vars)

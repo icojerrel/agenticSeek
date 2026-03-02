@@ -8,14 +8,86 @@
 - Basic familiarity with Python and AI models.
 - Join the discord (optional): https://discord.gg/8hGDaME3TC
 
+## Development Setup
+
+### 1. Clone and Install
+
+```bash
+git clone https://github.com/Fosowl/agenticSeek.git
+cd agenticSeek
+
+# Install dependencies with uv
+pip install uv
+uv sync
+
+# Install test dependencies
+pip install pytest pytest-cov pytest-asyncio
+
+# Install pre-commit hooks (recommended)
+pip install pre-commit
+pre-commit install
+```
+
+### 2. Pre-commit Hooks
+
+Pre-commit hooks ensure code quality and security:
+
+- **Black** - Code formatting
+- **Flake8** - Linting
+- **MyPy** - Type checking
+- **TruffleHog** - Secret detection
+- **Bandit** - Security scanning
+
+Hooks run automatically on `git commit`. Fix issues before committing.
+
+### 3. Running Tests
+
+```bash
+# Run all tests
+pytest tests/ -v
+
+# Run with coverage
+pytest tests/ -v --cov=sources --cov-report=html
+
+# Run specific test file
+pytest tests/test_safety.py -v
+pytest tests/test_memory.py -v
+pytest tests/test_llm_provider.py -v
+
+# Run tests by marker
+pytest -m unit          # Unit tests only
+pytest -m integration   # Integration tests only
+pytest -m slow          # Slow tests only
+```
+
+### 4. Code Quality Checks
+
+```bash
+# Black formatting check
+black --check sources/ tests/
+
+# Flake8 linting
+flake8 sources/ tests/ --max-line-length=127
+
+# MyPy type checking
+mypy sources/ --ignore-missing-imports
+```
+
+### 5. Building Documentation
+
+```bash
+# API reference is auto-generated from docstrings
+# Ensure all public methods have Google-style docstrings
+```
+
 ## Contribution Guidelines
 
 We welcome contributions in the following areas:
 
-- Code Improvements: Optimize existing code, fix bugs, or add new features.
-- Documentation: Improve the README, write tutorials, or add inline comments.
-- Testing: Write unit tests, integration tests, or help with debugging.
-- New Features: Implement new tools, agents, or integrations.
+- **Code Improvements**: Optimize existing code, fix bugs, or add new features.
+- **Documentation**: Improve the README, write tutorials, or add inline comments.
+- **Testing**: Write unit tests, integration tests, or help with debugging.
+- **New Features**: Implement new tools, agents, or integrations.
 
 ## Steps to Contribute
 
@@ -63,15 +135,37 @@ Push your changes to your fork and submit a pull request to the main branch of t
 
 5. **Code Quality**
    - Write clear, self-documenting code
-   - Include type hints and docstrings
+   - Include type hints and docstrings (Google style)
    - Follow existing patterns in the codebase
-   - Add a if __name__ == "__main__" at the bottom of each class file for individual testing.
-   - Ideally had automated tests.
+   - Add a `if __name__ == "__main__"` at the bottom of each class file for individual testing
+   - Write automated tests for new features
+   - Run pre-commit hooks before committing
 
 6. **Error Handling**
    - Fail gracefully with meaningful messages
    - Include recovery mechanisms where possible
    - Log errors appropriately without exposing sensitive data
+   - Use custom exceptions from `sources.exceptions`
+
+7. **Safety & Security** ⭐ NEW
+   - All code execution tools MUST implement safety checks
+   - Never commit secrets or API keys (TruffleHog will catch them)
+   - Validate all user inputs
+   - Use parameterized queries for database operations
+   - Run `bandit` security scans locally
+
+8. **Testing Requirements** ⭐ NEW
+   - Write tests for all new features
+   - Aim for 80%+ code coverage
+   - Include unit tests and integration tests where appropriate
+   - Mark tests with appropriate markers: `@pytest.mark.unit`, `@pytest.mark.integration`, `@pytest.mark.slow`
+   - Use fixtures from `tests/conftest.py`
+
+9. **Documentation** ⭐ NEW
+   - All public methods need docstrings with Args/Returns
+   - Update API_REFERENCE.md for new public APIs
+   - Add usage examples for new features
+   - Keep inline comments minimal and focused on "why" not "what"
 
 ## Areas Needing Help
 

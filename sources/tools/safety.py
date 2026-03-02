@@ -66,25 +66,58 @@ unsafe_commands_windows = [
     "bootcfg"
 ]
 
-def is_any_unsafe(cmds):
+def is_any_unsafe(cmds: list) -> bool:
     """
-    check if any bash command is unsafe.
+    Check if any command in the list is unsafe.
+    
+    Args:
+        cmds: List of commands to check
+        
+    Returns:
+        True if any command is unsafe, False otherwise
     """
+    if not cmds:
+        return False
     for cmd in cmds:
         if is_unsafe(cmd):
             return True
     return False
 
-def is_unsafe(cmd):
+def is_unsafe(cmd: str) -> bool:
     """
-    check if a bash command is unsafe.
+    Check if a command is unsafe.
+    
+    This function checks against both Unix and Windows unsafe commands
+    to ensure cross-platform safety.
+    
+    Args:
+        cmd: Command string to check
+        
+    Returns:
+        True if command is unsafe, False otherwise
     """
-    if sys.platform.startswith("win"):
-        if any(c in cmd for c in unsafe_commands_windows):
+    if not cmd or not isinstance(cmd, str):
+        return False
+    
+    cmd_lower = cmd.lower().strip()
+    
+    # Extract the base command (first word)
+    base_cmd = cmd_lower.split()[0] if cmd_lower.split() else cmd_lower
+    
+    # Check Unix commands
+    for unsafe_cmd in unsafe_commands_unix:
+        unsafe_base = unsafe_cmd.split()[0].lower()
+        # Check if command starts with unsafe command or contains it as substring
+        if base_cmd == unsafe_base or unsafe_cmd.lower() in cmd_lower:
             return True
-    else:
-        if any(c in cmd for c in unsafe_commands_unix):
+    
+    # Check Windows commands
+    for unsafe_cmd in unsafe_commands_windows:
+        unsafe_base = unsafe_cmd.split()[0].lower()
+        # Check if command starts with unsafe command or contains it as substring
+        if base_cmd == unsafe_base or unsafe_cmd.lower() in cmd_lower:
             return True
+    
     return False
 
 if __name__ == "__main__":

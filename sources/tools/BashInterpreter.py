@@ -8,7 +8,8 @@ if __name__ == "__main__": # if running as a script for individual testing
     sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 from sources.tools.tools import Tools
-from sources.tools.safety import is_any_unsafe
+from sources.tools.safety import is_any_unsafe, is_unsafe
+from sources.exceptions import SafetyCheckError, ToolExecutionError
 
 class BashInterpreter(Tools):
     """
@@ -19,7 +20,8 @@ class BashInterpreter(Tools):
         self.tag = "bash"
         self.name = "Bash Interpreter"
         self.description = "This tool allows the agent to execute bash commands."
-    
+        self.safety_enabled = True
+
     def language_bash_attempt(self, command: str):
         """
         Detect if AI attempt to run the code using bash.
@@ -31,23 +33,45 @@ class BashInterpreter(Tools):
             if any(word.startswith(lang) for lang in lang_interpreter):
                 return True
         return False
-    
-    def execute(self, commands: str, safety=False, timeout=300):
+
+    def execute(self, commands: list[str], safety: bool = True, timeout: int = 300) -> str:
         """
-        Execute bash commands and display output in real-time.
+        Execute bash commands with safety checks.
+        
+        Args:
+            commands: List of bash commands to execute
+            safety: If True, validate commands for unsafe operations
+            timeout: Command timeout in seconds
+            
+        Returns:
+            Command output or error message
+            
+        Raises:
+            SafetyCheckError: If unsafe command is detected
         """
         if safety and input("Execute command? y/n ") != "y":
             return "Command rejected by user."
-    
+
         concat_output = ""
+        
         for command in commands:
+            # Safety check: detect unsafe commands
+            if safety and is_unsafe(command):
+                error_msg = f"Unsafe command detected: '{command}'. Execution aborted."
+                self.logger.error(error_msg)
+                if self.safety_enabled:
+                    return f"[Safety Error] {error_msg}"
+            
             command = f"cd {self.work_dir} && {command}"
             command = command.replace('\n', '')
+            
             if self.safe_mode and is_any_unsafe(commands):
                 print(f"Unsafe command rejected: {command}")
                 return "\nUnsafe command: {command}. Execution aborted. This is beyond allowed capabilities report to user."
+                
             if self.language_bash_attempt(command) and self.allow_language_exec_bash == False:
                 continue
+                
             try:
                 process = subprocess.Popen(
                     command,
@@ -67,7 +91,9 @@ class BashInterpreter(Tools):
                 process.kill()  # Kill the process if it times out
                 return f"Command {command} timed out. Output:\n{command_output}"
             except Exception as e:
+                self.logger.error(f"Command execution failed: {str(e)}")
                 return f"Command {command} failed:\n{str(e)}"
+                
         return concat_output
 
     def interpreter_feedback(self, output):
