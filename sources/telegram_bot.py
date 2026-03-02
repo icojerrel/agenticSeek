@@ -7,8 +7,11 @@ Users can send messages and receive responses from the AI assistant.
 
 import os
 import sys
+import time
 import asyncio
 import threading
+import configparser
+import requests
 from flask import Flask, request, jsonify
 from dotenv import load_dotenv
 from pathlib import Path
@@ -22,9 +25,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from sources.telegram_notifier import TelegramNotifier
 from sources.logger import Logger
 from sources.interaction import Interaction
-from sources.agents.casual_agent import CasualAgent
-from sources.agents.code_agent import CoderAgent
-from sources.agents.browser_agent import BrowserAgent
+from sources.agents import CasualAgent, CoderAgent, FileAgent, BrowserAgent, PlannerAgent
 from sources.llm_provider import Provider
 
 logger = Logger("telegram_bot.log")
@@ -304,54 +305,69 @@ class TelegramBotHandler:
                 
             except Exception as e:
                 self.logger.error(f"Polling error: {str(e)}")
-                import time
                 time.sleep(5)
 
 
 def initialize_agenticseek():
-    """Initialize AgenticSeek interaction."""
+    """Initialize AgenticSeek interaction from config.ini."""
     global interaction
-    
+
     try:
         logger.info("Initializing AgenticSeek...")
-        
-        # Initialize LLM provider
+
+        config = configparser.ConfigParser()
+        config.read('config.ini')
+
+        personality_folder = "jarvis" if config.getboolean('MAIN', 'jarvis_personality') else "base"
+        languages = config["MAIN"]["languages"].split(' ')
+
         provider = Provider(
-            provider_name="ollama",
-            model="deepseek-r1:14b",
-            is_local=True
+            provider_name=config["MAIN"]["provider_name"],
+            model=config["MAIN"]["provider_model"],
+            server_address=config["MAIN"]["provider_server_address"],
+            is_local=config.getboolean('MAIN', 'is_local')
         )
-        
-        # Initialize agents
-        casual_agent = CasualAgent(
-            name="AgenticSeek",
-            prompt_path="prompts/base/casual_agent.txt",
-            provider=provider
-        )
-        
-        coder_agent = CoderAgent(
-            name="CodeMaster",
-            prompt_path="prompts/base/coder_agent.txt",
-            provider=provider
-        )
-        
-        browser_agent = BrowserAgent(
-            name="WebSurfer",
-            prompt_path="prompts/base/browser_agent.txt",
-            provider=provider
-        )
-        
-        # Initialize interaction
+        logger.info(f"Provider: {provider.provider_name} ({provider.model})")
+
+        agents = [
+            CasualAgent(
+                name=config["MAIN"]["agent_name"],
+                prompt_path=f"prompts/{personality_folder}/casual_agent.txt",
+                provider=provider, verbose=False
+            ),
+            CoderAgent(
+                name="coder",
+                prompt_path=f"prompts/{personality_folder}/coder_agent.txt",
+                provider=provider, verbose=False
+            ),
+            FileAgent(
+                name="File Agent",
+                prompt_path=f"prompts/{personality_folder}/file_agent.txt",
+                provider=provider, verbose=False
+            ),
+            BrowserAgent(
+                name="Browser",
+                prompt_path=f"prompts/{personality_folder}/browser_agent.txt",
+                provider=provider, verbose=False
+            ),
+            PlannerAgent(
+                name="Planner",
+                prompt_path=f"prompts/{personality_folder}/planner_agent.txt",
+                provider=provider, verbose=False
+            ),
+        ]
+
         interaction = Interaction(
-            agents=[casual_agent, coder_agent, browser_agent],
+            agents,
             tts_enabled=False,
             stt_enabled=False,
-            recover_last_session=False
+            recover_last_session=config.getboolean('MAIN', 'recover_last_session'),
+            langs=languages
         )
-        
+
         logger.info("AgenticSeek initialized successfully")
         return True
-        
+
     except Exception as e:
         logger.error(f"Failed to initialize AgenticSeek: {str(e)}")
         return False
@@ -435,8 +451,6 @@ def start_webhook(webhook_url: str, port: int = 5000):
 
 
 if __name__ == "__main__":
-    import requests
-    
     print("="*60)
     print("  AgenticSeek Telegram Bot")
     print("="*60)
@@ -451,7 +465,6 @@ if __name__ == "__main__":
         # Keep main thread alive
         try:
             while True:
-                import time
                 time.sleep(1)
         except KeyboardInterrupt:
             print("\nBot stopped by user")
