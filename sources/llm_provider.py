@@ -32,12 +32,13 @@ class Provider:
             "together": self.together_fn,
             "dsk_deepseek": self.dsk_deepseek,
             "openrouter": self.openrouter_fn,
+            "glm": self.glm_fn,
             "test": self.test_fn
         }
         self.logger = Logger("provider.log")
         self.api_key = None
         self.internal_url, self.in_docker = self.get_internal_url()
-        self.unsafe_providers = ["openai", "deepseek", "dsk_deepseek", "together", "google", "openrouter"]
+        self.unsafe_providers = ["openai", "deepseek", "dsk_deepseek", "together", "google", "openrouter", "glm"]
         if self.provider_name not in self.available_providers:
             raise ValueError(f"Unknown provider: {provider_name}")
         if self.provider_name in self.unsafe_providers and self.is_local == False:
@@ -411,6 +412,29 @@ class Provider:
             return thought
         except Exception as e:
             raise Exception(f"OpenRouter API error: {str(e)}") from e
+
+    def glm_fn(self, history, verbose=False):
+        """
+        Use Zhipu AI GLM API to generate text (OpenAI-compatible).
+        Supports models like glm-4, glm-4-flash, glm-4v, glm-z1-flash, etc.
+        Get your API key at: https://open.bigmodel.cn/
+        """
+        client = OpenAI(api_key=self.api_key, base_url="https://open.bigmodel.cn/api/paas/v4/")
+        if self.is_local:
+            raise Exception("GLM (Zhipu AI) is not available for local use. Change config.ini")
+        try:
+            response = client.chat.completions.create(
+                model=self.model,
+                messages=history,
+            )
+            if response is None:
+                raise Exception("GLM response is empty.")
+            thought = response.choices[0].message.content
+            if verbose:
+                print(thought)
+            return thought
+        except Exception as e:
+            raise Exception(f"GLM API error: {str(e)}") from e
 
     def dsk_deepseek(self, history, verbose=False):
         """
