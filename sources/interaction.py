@@ -21,6 +21,7 @@ class Interaction:
         self.is_active = True
         self.current_agent = None
         self.last_query = None
+        self.previous_query = None
         self.last_answer = None
         self.last_reasoning = None
         self.agents = agents
@@ -148,22 +149,22 @@ class Interaction:
     
     async def think(self) -> bool:
         """Request AI agents to process the user input."""
-        push_last_agent_memory = False
         if self.last_query is None or len(self.last_query) == 0:
             return False
         agent = self.router.select_agent(self.last_query)
         if agent is None:
             return False
-        if self.current_agent != agent and self.last_answer is not None:
-            push_last_agent_memory = True
+        # When switching agents, inject the previous interaction as context
+        # before the new agent processes the current query (avoids duplicate pushes)
+        if self.current_agent != agent and self.previous_query is not None and self.last_answer is not None:
+            agent.memory.push('user', self.previous_query)
+            agent.memory.push('assistant', self.last_answer)
+        self.previous_query = self.last_query
         tmp = self.last_answer
         self.current_agent = agent
         self.is_generating = True
         self.last_answer, self.last_reasoning = await agent.process(self.last_query, self.speech)
         self.is_generating = False
-        if push_last_agent_memory:
-            self.current_agent.memory.push('user', self.last_query)
-            self.current_agent.memory.push('assistant', self.last_answer)
         if self.last_answer == tmp:
             self.last_answer = None
         return True
